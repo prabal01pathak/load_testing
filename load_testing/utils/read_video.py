@@ -13,9 +13,10 @@ import cv2
 class ReadVideo:
     """Read video stream"""
 
-    def __init__(self, video_path: Path) -> None:
-        self.video_path = video_path
+    def __init__(self, video_path_main: Path, **kwargs) -> None:
+        self.video_path = video_path_main
         self.cap = None
+        self.kwargs = kwargs
 
     def read(self):
         """read video"""
@@ -23,11 +24,30 @@ class ReadVideo:
 
     def agument_video(self) -> Iterable[list]:
         """Read and agument images"""
+        print(self.kwargs)
         while True:
             try:
                 _, frame = self.cap.read()
-                if cv2.waitKey("q" | 1):
+                print(
+                    f"Showing for Frame{self.kwargs.get('process_number')}{self.kwargs.get('thread_number')}"
+                )
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    self.cap.release()
                     break
                 yield frame
             except cv2.error as _e:
                 print(_e)
+
+
+def main():
+    """Main function to run the ReadVideo class"""
+    video_path = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
+    read_video = ReadVideo(video_path=video_path)
+    read_video.read()
+    for frame in read_video.agument_video():
+        cv2.imshow("frame", frame)
+        print(frame)
+
+
+if __name__ == "__main__":
+    main()
