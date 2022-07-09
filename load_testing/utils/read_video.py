@@ -7,9 +7,12 @@ Author: Prabal Pathak
 
 from typing import Iterable
 from pathlib import Path
+from dataclasses import dataclass
+
 import cv2
 
 
+@dataclass
 class ReadVideo:
     """Read video stream"""
 
@@ -24,13 +27,13 @@ class ReadVideo:
 
     def agument_video(self) -> Iterable[list]:
         """Read and agument images"""
-        print(self.kwargs)
+        # print(self.kwargs)
         while True:
             try:
                 _, frame = self.cap.read()
-                print(
-                    f"Showing for Frame{self.kwargs.get('process_number')}{self.kwargs.get('thread_number')}"
-                )
+                # print(
+                #     f"Showing for Frame{self.kwargs.get('process_number')}{self.kwargs.get('thread_number')}"
+                # )
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     self.cap.release()
                     break
@@ -42,11 +45,11 @@ class ReadVideo:
 def main():
     """Main function to run the ReadVideo class"""
     video_path = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
-    read_video = ReadVideo(video_path=video_path)
+    read_video = ReadVideo(video_path_main=video_path)
     read_video.read()
     for frame in read_video.agument_video():
         cv2.imshow("frame", frame)
-        print(frame)
+        # print(frame)
 
 
 if __name__ == "__main__":
