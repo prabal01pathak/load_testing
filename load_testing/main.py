@@ -9,12 +9,13 @@ import time
 from pathlib import Path
 from typing import Optional, Iterable
 from multiprocessing import Process, Queue
-import threading
 from threading import Thread
+import json
 
 from rich import print
 from typer import Typer
-from loguru import logger
+
+# from loguru import logger
 
 from .utils.read_video import ReadVideo
 from .utils.save_data import start_save_process
@@ -25,28 +26,36 @@ QUEUE_BUS = Queue()
 DATA_QUEUE = Queue()
 VIDEO_PATH = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
 DATA_PATH = "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/"
+DEFAULT_RUN_TIME = 30
 
 
 @cmd_app.command()
 def process(
     process_count: Optional[int] = 1,
-    video_path: str = VIDEO_PATH,
     thread_count: int = 1,
+    run_time: int = DEFAULT_RUN_TIME,
+    video_path: str = VIDEO_PATH,
 ) -> None:
     """initiate process number=number
     Args:
-            number(int): number of processes to run
+            process_count(int): number of processes to run
+            video_path(str): path to video
+            thread_count(int): total number of threads to run
+            run_time: Running time for application in seconds
     Return:
-            none
+            None
     """
-    kwargs = {"video_path": video_path, "thread_count": thread_count}
+    kwargs = {
+        "video_path": video_path,
+        "thread_count": thread_count,
+        "run_time": run_time,
+    }
     data_file_name = Path(f"{DATA_PATH}data_file_{process_count}{thread_count}_0.json")
-    start_save_process(path=data_file_name, queue=DATA_QUEUE)
+    start_save_process(path=data_file_name, queue=DATA_QUEUE, **kwargs)
     for i in range(process_count):
         kwargs.update({"process_number": i + 1, "data_queue": DATA_QUEUE})
         Process(target=create_process, args=[QUEUE_BUS], kwargs=kwargs).start()
-        # print("Created Process Number: ", i + 1)
-    # print("[bold red]How are you")
+        print("Created Process Number: ", i + 1)
 
 
 def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
@@ -70,10 +79,10 @@ def create_thread(queue: Queue, number: int = 1, **kwargs: dict) -> None:
     for i in range(number):
         kwargs.update({"thread_number": i})
         Thread(target=read_video_thread, args=[queue], kwargs=kwargs).start()
-        # print("Started thread Number: ", i + 1)
+        print("Started thread Number: ", i + 1)
 
 
-@logger.catch
+# @logger.catch
 def read_video_thread(queue: Queue, **kwargs) -> None:
     """read the video from ReadVideo class
 
@@ -81,7 +90,8 @@ def read_video_thread(queue: Queue, **kwargs) -> None:
             path (str, optional): path to video
     """
     # no threading module before multiprocessing
-
+    thread_start_time = time.time()
+    thread_run_time = kwargs.get("run_time")
     video_path = kwargs.get("video_path")
     read_video = ReadVideo(video_path, **kwargs)
     read_video.read()
@@ -98,22 +108,32 @@ def read_video_thread(queue: Queue, **kwargs) -> None:
 
         finally:
             data = {
-                f'frame{kwargs.get("process_number")}_{threading.get_native_id()}': total_time
+                f"thread-{kwargs.get('process_number')}{kwargs.get('thread_number')}": total_time
             }
             data_queue.put(data)
-            print(data)
-        if not queue.empty():
+            print(json.dumps(data), ",")
+        if not queue.empty() or not check_running_status(
+            thread_start_time, thread_run_time
+        ):
             print(
-                f"Stopping the Process: \
-{kwargs.get('process_number')} \nthread Number: {kwargs.get('thread_number')}"
+                f"Stopping the Process: {kwargs.get('process_number')} \nthread Number: {kwargs.get('thread_number')}"
             )
             break
 
 
-# @atexit.register
-def stop_threads():
-    """stop all running thread"""
-    QUEUE_BUS.put(False)
+def check_running_status(start_time: float, total_time: float):
+    """check running status to run the app till total_time
+
+    Args:
+        start_time (float, second): starting time=time.time
+        total_time (float, second): total_time = int
+
+    Returns:
+        bool: stop or not
+    """
+    if time.time() - start_time >= total_time:
+        return False
+    return True
 
 
 if __name__ == "__main__":

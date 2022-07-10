@@ -2,6 +2,7 @@
 Description: save generated data from other processes
 Author: Prabal Pathak
 """
+import time
 from multiprocessing import Process, Queue
 from pathlib import Path
 import json
@@ -10,12 +11,15 @@ import json
 class Save:
     """Save the data to json file"""
 
-    def __init__(self, queue: Queue, path: Path, **kwargs):
+    def __init__(self, queue: Queue, path: Path, **kwargs: dict):
         self.queue = queue
         self.path = path
         self.kwargs = kwargs
-        self.data = None
+        self.run_time = self.kwargs.get("run_time")
         self.encoding = "utf-8"
+        self.start_time = time.time()
+        self.data: dict = None
+        print(self.kwargs)
 
     def write_json(self, append_data: dict):
         """get all the data and filter write"""
@@ -38,18 +42,31 @@ class Save:
         """read the json file"""
         with open(self.path, "r", encoding=self.encoding) as f:
             self.data = json.load(f)
-            print(self.data)
+            # print(self.data)
+
+    def stopping_condition(self):
+        """Process Stopping condition
+        run for time and then till queue is not empty
+        """
+        stopping_time = time.time() - self.start_time
+        if stopping_time <= self.run_time:
+            return True
+        if not self.queue.empty():
+            return True
+        return False
 
     def run(self):
         """run the process in a while loop"""
         self.write_initial_json()
         while True:
-            if self.queue.empty():
-                continue
-            data = self.queue.get()
-            print("Putting: ", data)
-            self.read_json()
-            self.write_json(data)
+            if self.stopping_condition():
+                data = self.queue.get()
+                print("Putting: ", data)
+                self.read_json()
+                self.write_json(data)
+            else:
+                break
+        print("Stopping json saving process queue size: ", self.queue.qsize())
 
 
 def check_exists(path: Path) -> Path:
@@ -75,11 +92,11 @@ def check_exists(path: Path) -> Path:
     return path
 
 
-def start_save_process(path: Path, queue: Queue) -> None:
+def start_save_process(path: Path, queue: Queue, **kwargs) -> None:
     """start saving process"""
     new_path = check_exists(path)
-    s = Save(queue=queue, path=new_path)
-    Process(target=s.run).start()
+    _s = Save(queue=queue, path=new_path, **kwargs)
+    Process(target=_s.run).start()
 
 
 if __name__ == "__main__":
