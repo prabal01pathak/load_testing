@@ -5,9 +5,11 @@ Description: Nothing more that command line utility
 Author: Prabal Pathak
 """
 
+import atexit
 import time
 from pathlib import Path
 from typing import Optional, Iterable
+import multiprocessing
 from multiprocessing import Process, Queue
 from threading import Thread
 import json
@@ -26,7 +28,7 @@ QUEUE_BUS = Queue()
 DATA_QUEUE = Queue()
 VIDEO_PATH = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
 DATA_PATH = "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/"
-DEFAULT_RUN_TIME = 30
+DEFAULT_RUN_TIME = 300
 
 
 @cmd_app.command()
@@ -50,12 +52,13 @@ def process(
         "thread_count": thread_count,
         "run_time": run_time,
     }
-    data_file_name = Path(f"{DATA_PATH}data_file_{process_count}{thread_count}_0.json")
-    start_save_process(path=data_file_name, queue=DATA_QUEUE, **kwargs)
+    print("[")
+    # data_file_name = Path(f"{DATA_PATH}data_file_{process_count}{thread_count}_0.json")
+    # start_save_process(path=data_file_name, queue=DATA_QUEUE, **kwargs)
     for i in range(process_count):
         kwargs.update({"process_number": i + 1, "data_queue": DATA_QUEUE})
         Process(target=create_process, args=[QUEUE_BUS], kwargs=kwargs).start()
-        print("Created Process Number: ", i + 1)
+        # print("Created Process Number: ", i + 1)
 
 
 def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
@@ -79,7 +82,7 @@ def create_thread(queue: Queue, number: int = 1, **kwargs: dict) -> None:
     for i in range(number):
         kwargs.update({"thread_number": i})
         Thread(target=read_video_thread, args=[queue], kwargs=kwargs).start()
-        print("Started thread Number: ", i + 1)
+        # print("Started thread Number: ", i + 1)
 
 
 # @logger.catch
@@ -110,14 +113,15 @@ def read_video_thread(queue: Queue, **kwargs) -> None:
             data = {
                 f"thread-{kwargs.get('process_number')}{kwargs.get('thread_number')}": total_time
             }
-            data_queue.put(data)
-            print(json.dumps(data), ",")
+            # data_queue.put(data)
+            print(json.dumps(data), end=",")
+            # time.sleep(0.0001)
         if not queue.empty() or not check_running_status(
             thread_start_time, thread_run_time
         ):
-            print(
-                f"Stopping the Process: {kwargs.get('process_number')} \nthread Number: {kwargs.get('thread_number')}"
-            )
+            # print(
+            #     f"Stopping the Process: {kwargs.get('process_number')} \nthread Number: {kwargs.get('thread_number')}"
+            # )
             break
 
 
@@ -134,6 +138,16 @@ def check_running_status(start_time: float, total_time: float):
     if time.time() - start_time >= total_time:
         return False
     return True
+
+
+@atexit.register
+def get_process_count():
+    """get number of process running"""
+    processes = multiprocessing.active_children()
+    for children in processes:
+        children.join()
+    print("]")
+    # print("Completed all tasks I'm done")
 
 
 if __name__ == "__main__":

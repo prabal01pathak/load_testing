@@ -58,14 +58,13 @@ class Save:
     def run(self):
         """run the process in a while loop"""
         self.write_initial_json()
-        while True:
-            if self.stopping_condition():
-                data = self.queue.get()
-                print("Putting: ", data)
-                self.read_json()
-                self.write_json(data)
-            else:
-                break
+        while self.stopping_condition():
+            if self.queue.empty():
+                continue
+            data = self.queue.get()
+            print("Putting: ", data)
+            self.read_json()
+            self.write_json(data)
         print("Stopping json saving process queue size: ", self.queue.qsize())
 
 
