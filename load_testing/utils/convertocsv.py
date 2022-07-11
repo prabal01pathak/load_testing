@@ -44,9 +44,9 @@ class Converter:
         Args:
             dataframe (pd.Dataframe): dataframe to save
         """
-        dataframe.to_csv("logs2.csv")
+        dataframe.to_csv("logs4.csv")
 
 
 if __name__ == "__main__":
-    convert = Converter("../../logs/logs2.json")
+    convert = Converter("../../logs/logs5.json")
     convert.convert_json_to_csv()

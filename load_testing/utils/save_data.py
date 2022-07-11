@@ -18,31 +18,45 @@ class Save:
         self.run_time = self.kwargs.get("run_time")
         self.encoding = "utf-8"
         self.start_time = time.time()
-        self.data: dict = None
-        print(self.kwargs)
 
-    def write_json(self, append_data: dict):
+    def write_json(self, append_data: dict, read_data: dict):
         """get all the data and filter write"""
         key = list(append_data.keys())[0]
-        if not self.data.get(key):
-            self.data[key] = [append_data[key]]
+        if not read_data.get(key):
+            read_data[key] = [append_data[key]]
         else:
-            self.data[key].append(append_data[key])
+            read_data[key].append(append_data[key])
         with open(self.path, "w", encoding=self.encoding) as write_object:
-            json.dump(self.data, write_object)
+            json.dump(read_data, write_object)
 
     def write_initial_json(self):
         """write initial objects for json"""
         if self.path.exists():
             raise ValueError("Path already exists")
         with open(self.path, "w", encoding=self.encoding) as write_object:
-            json.dump({}, write_object)
+            json.dump([], write_object)
 
     def read_json(self):
         """read the json file"""
-        with open(self.path, "r", encoding=self.encoding) as f:
-            self.data = json.load(f)
+        with open(self.path, "r", encoding=self.encoding) as _f:
+            read_data = json.loads(_f.read())
             # print(self.data)
+        return read_data
+
+    def save_without_run(self, data: dict):
+        """save data to json without running in different process
+
+        Args:
+            data (dict): data to append
+        """
+        read_data = self.read_json()
+        self.write_json(data, read_data)
+
+    def append_data(self, data):
+        read_data = self.read_json()
+        with open(self.path, "w", encoding=self.encoding) as _f:
+            read_data.append(data)
+            json.dump(read_data, _f)
 
     def stopping_condition(self):
         """Process Stopping condition
