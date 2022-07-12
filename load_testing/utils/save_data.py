@@ -53,6 +53,7 @@ class Save:
         self.write_json(data, read_data)
 
     def append_data(self, data):
+        """append data without running in different process"""
         read_data = self.read_json()
         with open(self.path, "w", encoding=self.encoding) as _f:
             read_data.append(data)
@@ -73,12 +74,10 @@ class Save:
         """run the process in a while loop"""
         self.write_initial_json()
         while self.stopping_condition():
-            if self.queue.empty():
-                continue
             data = self.queue.get()
             print("Putting: ", data)
-            self.read_json()
-            self.write_json(data)
+            read_data = self.read_json()
+            self.write_json(append_data=data, read_data=read_data)
         print("Stopping json saving process queue size: ", self.queue.qsize())
 
 
@@ -96,8 +95,6 @@ def check_exists(path: Path, ext: str = "json") -> Path:
     if path.exists():
         count = 0
         parent = path.parent
-        print(not ext)
-        print(ext)
         while path.exists():
             file_name = path.stem
             data = file_name.split("_")

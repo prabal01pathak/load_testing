@@ -4,12 +4,14 @@ Author: Prabal Pathak
 """
 
 import json
+from pathlib import Path
 import pandas as pd
 
 
 class Converter:
-    def __init__(self, file_name: str) -> None:
+    def __init__(self, file_name: str, csv_path: Path) -> None:
         self.file_name = file_name
+        self.csv_path = csv_path
         self.encoding = "utf-8"
 
     def convert_json_to_csv(self):
@@ -18,7 +20,6 @@ class Converter:
             data = json.load(file)
         dataframe = pd.DataFrame(data)
         dataframe = self.clean_dataframe(dataframe=dataframe)
-        print(dataframe)
         self.save_to_csv(dataframe=dataframe)
 
     def clean_dataframe(self, dataframe: pd.DataFrame):
@@ -33,8 +34,6 @@ class Converter:
             _column = dataframe[key]
             _column = _column.dropna(axis=0)
             new_dataframe[key] = _column.reset_index(drop=True)
-        print(_column.index)
-        print(new_dataframe.index)
         return new_dataframe
         # remove nan values
 
@@ -44,7 +43,7 @@ class Converter:
         Args:
             dataframe (pd.Dataframe): dataframe to save
         """
-        dataframe.to_csv("logs4.csv")
+        dataframe.to_csv(self.csv_path)
 
 
 if __name__ == "__main__":
