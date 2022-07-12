@@ -34,7 +34,7 @@ class Save:
         if self.path.exists():
             raise ValueError("Path already exists")
         with open(self.path, "w", encoding=self.encoding) as write_object:
-            json.dump([], write_object)
+            json.dump({}, write_object)
 
     def read_json(self):
         """read the json file"""
@@ -82,12 +82,13 @@ class Save:
         print("Stopping json saving process queue size: ", self.queue.qsize())
 
 
-def check_exists(path: Path) -> Path:
+def check_exists(path: Path, ext: str = "json") -> Path:
     """check if path exists if yes then return
     modified path
 
     Args:
-        path (Path): _description_
+        path (Path): path to file or folder
+        ext (str): extension default json if folder give it None
 
     Returns:
         Path: _description_
@@ -95,12 +96,17 @@ def check_exists(path: Path) -> Path:
     if path.exists():
         count = 0
         parent = path.parent
+        print(not ext)
+        print(ext)
         while path.exists():
             file_name = path.stem
             data = file_name.split("_")
             data.pop()
             file_name = f'{"_".join(data)}_{str(count)}'
-            path = Path(f"{str(parent)}/{file_name}.json")
+            if not ext:
+                path = Path(f"{str(parent)}/{file_name}")
+            else:
+                path = Path(f"{str(parent)}/{file_name}.{ext}")
             count += 1
     return path
 
@@ -114,8 +120,8 @@ def start_save_process(path: Path, queue: Queue, **kwargs) -> None:
 
 if __name__ == "__main__":
     csv_file_path = Path(
-        "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/test_files/new_file_13_0.json"
+        "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/test_files/new_file_13_0",
     )
-    data_path = check_exists(csv_file_path)
-    data_path.touch()
+    data_path = check_exists(path=csv_file_path, ext=None)
+    data_path.mkdir()
     print(data_path)
