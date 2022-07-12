@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 
 from .detector import detect
-from .logic_v1 import CountingLogic
+from .counting_logic import CountingLogic
 
 
 def error_message(message):

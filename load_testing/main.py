@@ -43,7 +43,7 @@ SAVE_FILE_PATH: Path = None
 # set any one of these true and others false
 SEND_TO_SERVER = False
 SAVE_QUEUE = False
-SAVE_LOG = True
+SAVE_LOG = False
 
 
 @cmd_app.command()
@@ -64,9 +64,10 @@ def process(
     Return:
             None
     """
-    global SAVE_FILE_PATH
-
-    if create_log:
+    global SAVE_FILE_PATH, SAVE_LOG, RUN_DETECTIONS
+    SAVE_LOG = create_log
+    RUN_DETECTIONS = run_detections
+    if SAVE_LOG:
         data_file_name = Path(
             f"{DATA_PATH}data_file_{process_count}{thread_count}_0.csv",
         )
@@ -91,7 +92,8 @@ def process(
     print(
         json.dumps(
             {"run_time": run_time, "time": datetime.now().strftime("%y:%m:%d-%H:%m:%s")}
-        )
+        ),
+        end=",",
     )
     if SAVE_QUEUE:
         from .utils.save_data import Save
@@ -117,7 +119,7 @@ def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
     Args:
             queue (Queue): queue bus
     """
-    if kwargs.get("run_detections"):
+    if RUN_DETECTIONS:
         from .detection_logic.feed_logic.saved_driver import Worker
 
         detection_worker = Worker()
@@ -242,7 +244,7 @@ def ping_server() -> bool:
     try:
         requests.get(SERVER_URL)
         return True
-    except Exception as _:
+    except requests.exceptions.ConnectionError as _:
         return False
 
 
@@ -270,15 +272,17 @@ def run_server():
 @atexit.register
 def get_process_count():
     """get number of process running"""
-    if not SEND_TO_SERVER:
-        processes = multiprocessing.active_children()
-        for children in processes:
-            children.join()
-        print("{}")
-        print("]")
-        if SAVE_LOG:
-            create_log_to_csv()
-    # print("Completed all tasks I'm done")
+    try:
+        if not SEND_TO_SERVER:
+            processes = multiprocessing.active_children()
+            for children in processes:
+                children.join()
+            if SAVE_LOG:
+                print("{}")
+                print("]")
+                create_log_to_csv()
+    except json.decoder.JSONDecodeError as _:
+        pass
 
 
 def create_log_to_csv():

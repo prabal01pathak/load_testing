@@ -2,6 +2,7 @@
 Description: Utils.save_data file Testing Module 
 Author: Prabal Pathak
 """
+import os
 from pathlib import Path
 from multiprocessing import Queue
 from load_testing.utils.save_data import Save, check_exists
@@ -17,6 +18,7 @@ def test_check_exists_folder():
     assert folder_path.exists() is False
     folder_path.mkdir()
     assert folder_path.exists() is True
+    folder_path.rmdir()
 
 
 def test_check_exists_file():
@@ -26,6 +28,7 @@ def test_check_exists_file():
     assert folder_path.exists() is False
     folder_path.touch()
     assert folder_path.exists() is True
+    os.remove(folder_path)
 
 
 def test_save():
@@ -39,3 +42,4 @@ def test_save():
     assert (
         s.write_json(append_data={"frame_23_22332": 0.00034343}, read_data={}) is None
     )
+    os.remove(new_path)
