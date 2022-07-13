@@ -31,7 +31,7 @@ cmd_app = Typer()
 
 QUEUE_BUS = Queue()
 DATA_QUEUE = Queue()
-VIDEO_PATH = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
+VIDEO_PATH = "testing_video/demo1.mp4"
 DATA_PATH = "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/"
 DEFAULT_RUN_TIME = 300
 SERVER_URL = "http://127.0.0.1:8000"
@@ -42,7 +42,7 @@ SAVE_FILE_PATH: Path = None
 # set any one of these true and others false
 SEND_TO_SERVER = False
 SAVE_QUEUE = False
-SAVE_LOG = False
+SAVE_LOG = True
 
 
 @cmd_app.command()
@@ -88,12 +88,12 @@ def process(
         "create_log": create_log,
     }
     print("[")
-    print(
-        json.dumps(
-            {"run_time": run_time, "time": datetime.now().strftime("%y:%m:%d-%H:%m:%s")}
-        ),
-        end=",",
-    )
+    # print(
+    #     json.dumps({"run_time": run_time}),
+    #     ",",
+    #     json.dumps({"time": datetime.now().strftime("%y:%m:%d-%H:%m:%s")}),
+    #     end=",",
+    # )
     if SAVE_QUEUE:
         from .utils.save_data import Save
 

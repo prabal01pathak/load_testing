@@ -23,6 +23,7 @@ black = {version = "^22.6.0", allow-prereleases = true}
 pylint = "^2.14.4"
 ptpython = "^3.0.20"
 jupyter = "^1.0.0"
+deepface = "^0.0.75"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
