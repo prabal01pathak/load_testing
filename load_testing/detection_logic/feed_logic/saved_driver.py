@@ -168,9 +168,10 @@ class Worker:
         )
 
         # try:
-        self.processed_frame = draw_roi(frame.copy(), rois)
-        # except Exception as _:
-        #     self.processed_frame = frame.copy()
+        try:
+            self.processed_frame = draw_roi(frame.copy(), rois)
+        except cv2.error as _:
+            self.processed_frame = frame.copy()
         self.processed_frame = write_analysis(self.processed_frame, analysis)
         # cv2.imshow('frame', self.processed_frame)
         stop = time()

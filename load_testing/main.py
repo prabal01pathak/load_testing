@@ -276,10 +276,10 @@ def get_process_count():
             processes = multiprocessing.active_children()
             for children in processes:
                 children.join()
-            if SAVE_LOG:
-                print("{}")
-                print("]")
-                create_log_to_csv()
+                if SAVE_LOG:
+                    print("{}")
+                    print("]")
+                    create_log_to_csv()
     except json.decoder.JSONDecodeError as _:
         pass
 
