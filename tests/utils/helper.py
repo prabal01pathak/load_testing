@@ -1,6 +1,5 @@
 """
 Description: Helper functions to test the module
-Author: Prabal Pathak
 """
 import json
 from pathlib import Path

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Description: server to save the data
-Author: Prabal Pathak
 """
 
 from pathlib import Path

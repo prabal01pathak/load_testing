@@ -1,6 +1,5 @@
 """
 Description: Detection logic module
-Author: Prabal Pathak
 """
 import os
 

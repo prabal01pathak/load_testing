@@ -1,6 +1,4 @@
-"""Module for counting objects
-Author: Prabal Pathak
-"""
+"""Module for counting objects"""
 import collections
 
 import cv2

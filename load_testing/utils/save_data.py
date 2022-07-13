@@ -1,6 +1,5 @@
 """
 Description: save generated data from other processes
-Author: Prabal Pathak
 """
 import time
 from multiprocessing import Process, Queue

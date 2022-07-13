@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Description: Read video file and yield it
-Author: Prabal Pathak
 """
 
 from typing import Iterable

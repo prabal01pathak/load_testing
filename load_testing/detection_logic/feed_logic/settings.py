@@ -1,6 +1,4 @@
-"""Settings file for detection module
-Author: Prabal Pathak
-"""
+"""Settings file for detection module"""
 from easydict import EasyDict as edict
 
 __APP_SETTINGS__ = edict()
