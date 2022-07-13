@@ -1,6 +1,5 @@
 """
 Description: Utils.save_data file Testing Module 
-Author: Prabal Pathak
 """
 import os
 from pathlib import Path

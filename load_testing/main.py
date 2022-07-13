@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Description: Nothing more that command line utility
-Author: Prabal Pathak
 """
 
 import atexit

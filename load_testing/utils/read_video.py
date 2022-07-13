@@ -44,7 +44,7 @@ class ReadVideo:
 
 def main():
     """Main function to run the ReadVideo class"""
-    video_path = "/home/prabal/Desktop/Auto_Bottle_Counter/backend/demo_video/demo1.mp4"
+    video_path = "testing_video/demo1.mp4"
     read_video = ReadVideo(video_path_main=video_path)
     read_video.read()
     for frame in read_video.agument_video():

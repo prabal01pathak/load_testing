@@ -1,6 +1,5 @@
 """
 Description: Play saved video file inplace of camera feed
-Author: Prabal Pathak
 """
 import sys
 from time import time
@@ -168,10 +167,10 @@ class Worker:
             self.bottle_index,
         )
 
-        try:
-            self.processed_frame = draw_roi(frame.copy(), rois)
-        except Exception as _:
-            self.processed_frame = frame.copy()
+        # try:
+        self.processed_frame = draw_roi(frame.copy(), rois)
+        # except Exception as _:
+        #     self.processed_frame = frame.copy()
         self.processed_frame = write_analysis(self.processed_frame, analysis)
         # cv2.imshow('frame', self.processed_frame)
         stop = time()
@@ -183,13 +182,3 @@ class Worker:
             "processed_frame": self.processed_frame,
             "time_taken": time_taken,
         }
-
-
-def camera_feed():
-    """Camera feed"""
-    cv2.VideoCapture(0)
-
-
-if __name__ == "__main__":
-    dictonary = {}
-    camera_feed()

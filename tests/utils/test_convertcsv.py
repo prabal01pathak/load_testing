@@ -1,6 +1,5 @@
 """
 Description: testing module for convert to csv file.
-Author: Prabal Pathak
 """
 import os
 from pathlib import Path

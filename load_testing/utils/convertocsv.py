@@ -1,10 +1,10 @@
 """
 Description: Convert json log data to csv
-Author: Prabal Pathak
 """
 
 import json
 from pathlib import Path
+
 import pandas as pd
 
 
