@@ -14,7 +14,7 @@ app = Typer()
 VIDEO_PATH = "testing_video/demo1.mp4"
 DEFAULT_RUN_TIME = 10
 RUN_DETECTIONS = True
-SAVE_LOG = True
+SAVE_LOG = False
 
 
 @app.command()
