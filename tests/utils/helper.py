@@ -12,6 +12,12 @@ def create_file(path: Path):
         path (Path): path to file
     """
     if not path.exists():
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8") as _f:
             data = [{"thread-10": 0.2}, {"thread-20": 0.3}]
-            json.dump(data, f)
+            json.dump(data, _f)
+
+
+def atexit_helper():
+    """converting logs/logs.json file to csv
+    it will create the logs/logs.json file
+    """

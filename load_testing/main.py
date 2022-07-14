@@ -7,13 +7,13 @@ Description: Nothing more that command line utility
 import atexit
 import time
 from pathlib import Path
-from datetime import datetime
 import os
 from typing import Optional, Iterable
 import multiprocessing
 from multiprocessing import Process, Queue
 from threading import Thread
 import json
+from dataclasses import dataclass
 
 import cv2
 from rich import print
@@ -32,7 +32,7 @@ cmd_app = Typer()
 QUEUE_BUS = Queue()
 DATA_QUEUE = Queue()
 VIDEO_PATH = "testing_video/demo1.mp4"
-DATA_PATH = "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/"
+DATA_PATH = "./data_files/"
 DEFAULT_RUN_TIME = 300
 SERVER_URL = "http://127.0.0.1:8000"
 RUN_DETECTIONS = True
@@ -110,6 +110,15 @@ def process(
         kwargs.update({"process_number": i + 1, "data_queue": DATA_QUEUE})
         Process(target=create_process, args=[QUEUE_BUS], kwargs=kwargs).start()
         # print("Created Process Number: ", i + 1)
+
+
+@dataclass
+class Manager:
+    """manage number of process and threads"""
+
+    def __init__(self, queue: Queue, **kwargs):
+        self.queue = queue
+        self.kwargs = kwargs
 
 
 def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
@@ -276,10 +285,10 @@ def get_process_count():
             processes = multiprocessing.active_children()
             for children in processes:
                 children.join()
-                if SAVE_LOG:
-                    print("{}")
-                    print("]")
-                    create_log_to_csv()
+            if SAVE_LOG:
+                print("{}")
+                print("]")
+                create_log_to_csv()
     except json.decoder.JSONDecodeError as _:
         pass
 

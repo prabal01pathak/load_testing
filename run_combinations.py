@@ -3,27 +3,18 @@ Run every possible combinations from max_process and max_thread arguments
 """
 import os
 import time
-from pathlib import Path
-from multiprocessing import Queue
 
 
 from typer import Typer
 
+from load_testing.main import (
+    VIDEO_PATH,
+    DEFAULT_RUN_TIME,
+    RUN_DETECTIONS,
+    SAVE_LOG,
+)
+
 app = Typer()
-
-QUEUE_BUS = Queue()
-DATA_QUEUE = Queue()
-VIDEO_PATH = "testing_video/demo1.mp4"
-DATA_PATH = "/home/prabal/Desktop/Resolute_Projects/load_testing/data_files/"
-DEFAULT_RUN_TIME = 10
-RUN_DETECTIONS = True
-SHOW_VIDEO = False
-SAVE_FILE_PATH: Path = None
-
-# set any one of these true and others false
-SEND_TO_SERVER = False
-SAVE_QUEUE = False
-SAVE_LOG = True
 
 
 @app.command()
@@ -49,7 +40,15 @@ def run(
     run_detections = "--run-detections" if run_detections else "--no-run-detections"
     for process_count in range(1, max_process + 1):
         for thread_count in range(1, max_thread + 1):
-            script = f"python3 runapp.py --process-count {process_count} --thread-count {thread_count} --run-time {run_time} --video-path {video_path} {create_log} {run_detections} {log_file}"
+            script = f"""\\
+                python3 runapp.py \\
+                --process-count {process_count} \\
+                --thread-count {thread_count} \\
+                --run-time {run_time} \\
+                --video-path {video_path} \\
+                {create_log} \\
+                {run_detections} \\
+                {log_file}"""
             print(script)
             os.system(script)
             time.sleep(wait_time)
