@@ -13,7 +13,6 @@ import multiprocessing
 from multiprocessing import Process, Queue
 from threading import Thread
 import json
-from dataclasses import dataclass
 
 import cv2
 from rich import print
@@ -23,7 +22,11 @@ import requests
 
 
 from .utils.read_video import ReadVideo
-from .utils.save_data import check_exists  # , start_save_process
+from .utils.save_data import (
+    Save,
+    check_exists,
+    create_process_folder,
+)  # , start_save_process
 from .utils.convertocsv import Converter
 from .data_collection.app import app
 
@@ -38,6 +41,7 @@ SERVER_URL = "http://127.0.0.1:8000"
 RUN_DETECTIONS = True
 SHOW_VIDEO = False
 SAVE_FILE_PATH: Path = None
+SAVE_TO_CSV: bool = True
 
 # set any one of these true and others false
 SEND_TO_SERVER = False
@@ -53,6 +57,7 @@ def process(
     video_path: str = VIDEO_PATH,
     run_detections: bool = RUN_DETECTIONS,
     create_log: bool = SAVE_LOG,
+    save_to_csv: bool = SAVE_TO_CSV,
 ) -> None:
     """initiate process number=number
     Args:
@@ -63,9 +68,10 @@ def process(
     Return:
             None
     """
-    global SAVE_FILE_PATH, SAVE_LOG, RUN_DETECTIONS
+    global SAVE_FILE_PATH, SAVE_LOG, RUN_DETECTIONS, SAVE_TO_CSV
     SAVE_LOG = create_log
     RUN_DETECTIONS = run_detections
+    SAVE_TO_CSV = save_to_csv
     if SAVE_LOG:
         data_file_name = Path(
             f"{DATA_PATH}data_file_{process_count}{thread_count}_0.csv",
@@ -86,6 +92,11 @@ def process(
         "data_file": path,
         "run_detections": run_detections,
         "create_log": create_log,
+        "saving_instance": None,
+        "process_number": None,
+        "data_queue": None,
+        "thread_number": None,
+        "detection_worker": None,
     }
     print("[")
     # print(
@@ -94,13 +105,6 @@ def process(
     #     json.dumps({"time": datetime.now().strftime("%y:%m:%d-%H:%m:%s")}),
     #     end=",",
     # )
-    if SAVE_QUEUE:
-        from .utils.save_data import Save
-
-        _save = Save(queue=DATA_QUEUE, path=path, **kwargs)
-        _save.write_initial_json()
-        # start_save_process(path=data_file_name, queue=DATA_QUEUE, **kwargs)
-        kwargs["saving_instance"] = _save
     if SEND_TO_SERVER:
         Process(target=run_server).start()
         while not ping_server():
@@ -112,21 +116,19 @@ def process(
         # print("Created Process Number: ", i + 1)
 
 
-@dataclass
-class Manager:
-    """manage number of process and threads"""
-
-    def __init__(self, queue: Queue, **kwargs):
-        self.queue = queue
-        self.kwargs = kwargs
-
-
 def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
     """# print process id
 
     Args:
             queue (Queue): queue bus
     """
+    if SAVE_TO_CSV:
+        process_number = kwargs.get("process_number")
+        process_path_dir = create_process_folder(process_number)
+        process_path_file = process_path_dir / f"process_data_{process_number}.csv"
+        _save = Save(queue=queue, path=process_path_file, **kwargs)
+        kwargs["saving_instance"] = _save
+
     if RUN_DETECTIONS:
         from .detection_logic.feed_logic.saved_driver import Worker
 
@@ -289,6 +291,10 @@ def get_process_count():
                 print("{}")
                 print("]")
                 create_log_to_csv()
+            else:
+                while True:
+                    print("All the process completed press (CTRL + C) to exit")
+                    time.sleep(300)
     except json.decoder.JSONDecodeError as _:
         pass
 

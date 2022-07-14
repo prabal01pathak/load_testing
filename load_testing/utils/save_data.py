@@ -5,6 +5,12 @@ import time
 from multiprocessing import Process, Queue
 from pathlib import Path
 import json
+import datetime as dt
+
+import pandas as pd
+
+DATA_PATH = Path("./data_files")
+DATE = dt.datetime.now()
 
 
 class Save:
@@ -79,6 +85,22 @@ class Save:
             self.write_json(append_data=data, read_data=read_data)
         print("Stopping json saving process queue size: ", self.queue.qsize())
 
+    def save_to_csv(self, data: dict) -> dict:
+        """save data to csv file
+
+        Args:
+            data (dict): data process, thread, avg_time,
+                time, no_of_frames, cpu_use, gpu_use, gpu_temp
+        Return:
+            dict: message
+        """
+        dataframe = pd.DataFrame(data)
+        if not self.path.exists():
+            dataframe.to_csv(self.path, mode="w", header=True, index=False)
+        else:
+            dataframe.to_csv(self.path, mode="a", header=False, index=False)
+        return {"message": "saved"}
+
 
 def check_exists(path: Path, ext: str = "json") -> Path:
     """check if path exists if yes then return
@@ -105,6 +127,20 @@ def check_exists(path: Path, ext: str = "json") -> Path:
                 path = Path(f"{str(parent)}/{file_name}.{ext}")
             count += 1
     return path
+
+
+def create_process_folder(process_number: int) -> Path:
+    """create a file for every process
+    Return:
+        after creating date/time directory return
+        director
+    """
+    str_date = DATE.strftime("%Y-%m-%d")
+    str_time = DATE.strftime("%H:%M:%S")
+    time_path = DATA_PATH / str_date / str_time
+    if not time_path.exists():
+        time_path.mkdir(parents=True)
+    return time_path
 
 
 def start_save_process(path: Path, queue: Queue, **kwargs) -> None:
