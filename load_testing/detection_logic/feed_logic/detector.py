@@ -2,6 +2,7 @@
 Description: Detection logic module
 """
 import os
+from pathlib import Path
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
@@ -22,8 +23,7 @@ if len(physical_devices) > 0:
 # Fweights = 'feed_logic/yolo_model_updated/v3'
 # Fclasses = 'feed_logic/yolo_model/data/classes/towel.names'
 home_path = os.getcwd()
-Fweights = os.path.join(
-    home_path,
+Fweights = Path(
     f"load_testing/detection_logic/feed_logic/yolo_model_updated/{__APP_SETTINGS__.MODEL_PATH}",
 )
 

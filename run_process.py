@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Run every possible combinations from max_process and max_thread arguments
 """
@@ -7,20 +9,18 @@ import time
 
 from typer import Typer
 
-from load_testing.main import (
-    VIDEO_PATH,
-    DEFAULT_RUN_TIME,
-    RUN_DETECTIONS,
-    SAVE_LOG,
-)
-
 app = Typer()
+
+VIDEO_PATH = "testing_video/demo1.mp4"
+DEFAULT_RUN_TIME = 10
+RUN_DETECTIONS = True
+SAVE_LOG = True
 
 
 @app.command()
 def run(
-    max_process: int = 1,
-    max_thread: int = 1,
+    process_count: int = 1,
+    thread_count: int = 1,
     run_time: int = DEFAULT_RUN_TIME,
     video_path: str = VIDEO_PATH,
     run_detections: bool = RUN_DETECTIONS,
@@ -38,20 +38,20 @@ def run(
     log_file = " >> logs/logs.json" if create_log else ""
     create_log = "--create-log" if create_log else "--no-create-log"
     run_detections = "--run-detections" if run_detections else "--no-run-detections"
-    for process_count in range(1, max_process + 1):
-        for thread_count in range(1, max_thread + 1):
-            script = f"""\\
-                python3 runapp.py \\
-                --process-count {process_count} \\
+    for _ in range(process_count):
+        script = f"""\\
+                gnome-terminal --tab -- bash -c \\
+                \"python3 runapp.py \\
+                --process-count 1 \\
                 --thread-count {thread_count} \\
                 --run-time {run_time} \\
                 --video-path {video_path} \\
                 {create_log} \\
                 {run_detections} \\
-                {log_file}"""
-            print(script)
-            os.system(script)
-            time.sleep(wait_time)
+                {log_file}\";"""
+        print(script)
+        os.system(script)
+        time.sleep(wait_time)
     print("Completed all combinations")
 
 

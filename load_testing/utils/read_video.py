@@ -31,7 +31,8 @@ class ReadVideo:
             try:
                 _, frame = self.cap.read()
                 # print(
-                #     f"Showing for Frame{self.kwargs.get('process_number')}{self.kwargs.get('thread_number')}"
+                #     f"Showing for
+                # Frame{self.kwargs.get('process_number')}{self.kwargs.get('thread_number')}"
                 # )
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     self.cap.release()

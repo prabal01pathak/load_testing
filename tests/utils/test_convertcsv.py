@@ -10,7 +10,11 @@ from load_testing.utils.convertocsv import Converter
 from .helper import create_file
 
 
-FILE_PATH = Path("data_files/test_files/new_file_23_0.json")
+TEST_FILE_DIR = Path("data_files/test_files/")
+if not TEST_FILE_DIR.exists():
+    TEST_FILE_DIR.mkdir()
+
+FILE_PATH = TEST_FILE_DIR / "new_file_23_0.json"
 OUTPUT_PATH = "data_files/test_files/new_file_23.0.csv"
 create_file(FILE_PATH)
 CONVERT = Converter(file_name=FILE_PATH, csv_path=OUTPUT_PATH)
@@ -42,7 +46,7 @@ FOR_CLEAN_DATAFRAME = pd.DataFrame(
 def test_converter_convert_json_csv():
     """test converter class"""
     data = CONVERT.convert_json_to_csv()
-    assert data == True
+    assert data is True
 
 
 def test_clean_dataframe():
@@ -53,14 +57,14 @@ def test_clean_dataframe():
     for i in range(3):
         assert equal_thread_10[i] == equal_thread_20[i]
     for j in range(1, 4):
-        assert equal_thread_10[-i] != equal_thread_20[-i]
+        assert equal_thread_10[-j] != equal_thread_20[-j]
 
 
 def test_save_to_csv():
     """test save data to csv file"""
     ack = CONVERT.save_to_csv(FOR_CLEAN_DATAFRAME)
     remove_data()
-    assert ack == True
+    assert ack is True
 
 
 def remove_data():

@@ -1,5 +1,5 @@
 """
-Description: Utils.save_data file Testing Module 
+Description: Utils.save_data file Testing Module
 """
 import os
 from pathlib import Path
@@ -35,10 +35,10 @@ def test_save():
     queue = Queue()
     file_name = "new_file_23_0.json"
     new_path = check_exists(Path(f"{DATA_PATH}{file_name}"))
-    s = Save(queue=queue, path=new_path)
-    assert s.write_initial_json() is None
-    assert s.read_json() == {}
+    _s = Save(queue=queue, path=new_path)
+    assert _s.write_initial_json() is None
+    assert _s.read_json() == {}
     assert (
-        s.write_json(append_data={"frame_23_22332": 0.00034343}, read_data={}) is None
+        _s.write_json(append_data={"frame_23_22332": 0.00034343}, read_data={}) is None
     )
     os.remove(new_path)

@@ -56,5 +56,5 @@ class Converter:
 
 
 if __name__ == "__main__":
-    convert = Converter("../../logs/logs5.json")
+    convert = Converter("../../logs/logs5.json", csv_path="data.csv")
     convert.convert_json_to_csv()
