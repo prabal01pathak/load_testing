@@ -4,6 +4,7 @@ Get system details like cpu usage, gpu usage, temprature etc.
 import os
 import time
 import platform
+import datetime as dt
 
 import psutil
 import GPUtil as gputil
@@ -98,20 +99,37 @@ class ProcessDetails:
             return f"{self.gpu.temperature}*C"
         return "0*C"
 
-    def running_time(self, func) -> float:
+    @staticmethod
+    def running_time(func) -> dict:
         """running time decorator to caculate running time
 
         Args:
             func (function): function
 
         Returns:
+            dict
             total_time(float): total processing time
+            func_return(): function return values
         """
 
         def wrapper(*args, **kwargs):
             start_time = time.time()
-            func(*args, **kwargs)
+            values = func(*args, **kwargs)
+            process_util: ProcessDetails = kwargs["process_util"]
+            cpu_usage = process_util.get_cpu_usage()
+            gpu_usage = process_util.get_gpu_usage()
+            gpu_temp = process_util.get_gpu_temprature()
+            memory_usage = process_util.get_memory_usage()
+            current_time = dt.datetime.now().strftime("%H:%M:%S")
             end_time = time.time()
-            return end_time - start_time
+            return {
+                "func_return": values,
+                "processing_time": end_time - start_time,
+                "time": current_time,
+                "cpu_usage": cpu_usage,
+                "gpu_usage": gpu_usage,
+                "gpu_temprateure": gpu_temp,
+                "memory_usage": memory_usage,
+            }
 
         return wrapper

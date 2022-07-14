@@ -19,6 +19,7 @@ from rich import print
 from typer import Typer
 import uvicorn
 import requests
+import numpy as np
 
 
 from .utils.read_video import ReadVideo
@@ -28,25 +29,27 @@ from .utils.save_data import (
     create_process_folder,
 )  # , start_save_process
 from .utils.convertocsv import Converter
+from .utils.system_details import ProcessDetails
 from .data_collection.app import app
 
 cmd_app = Typer()
 
-QUEUE_BUS = Queue()
-DATA_QUEUE = Queue()
+QUEUE_BUS = Queue()  # it'll stop all process if put anyting
+DATA_QUEUE = Queue()  # data queue to save the data from queue
 VIDEO_PATH = "testing_video/demo1.mp4"
 DATA_PATH = "./data_files/"
-DEFAULT_RUN_TIME = 300
+DEFAULT_RUN_TIME = 300  # run processes till that time. should be in seconds
 SERVER_URL = "http://127.0.0.1:8000"
 RUN_DETECTIONS = True
 SHOW_VIDEO = False
 SAVE_FILE_PATH: Path = None
 SAVE_TO_CSV: bool = True
+SAVE_TIME = 2  # after that time save the data to csv. should be in seconds
 
 # set any one of these true and others false
 SEND_TO_SERVER = False
 SAVE_QUEUE = False
-SAVE_LOG = True
+SAVE_LOG = False
 
 
 @cmd_app.command()
@@ -97,6 +100,7 @@ def process(
         "data_queue": None,
         "thread_number": None,
         "detection_worker": None,
+        "process_utils": None,
     }
     print("[")
     # print(
@@ -124,7 +128,7 @@ def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
     """
     if SAVE_TO_CSV:
         process_number = kwargs.get("process_number")
-        process_path_dir = create_process_folder(process_number)
+        process_path_dir: Path = create_process_folder(process_number)
         process_path_file = process_path_dir / f"process_data_{process_number}.csv"
         _save = Save(queue=queue, path=process_path_file, **kwargs)
         kwargs["saving_instance"] = _save
@@ -146,7 +150,9 @@ def create_thread(queue: Queue, number: int = 1, **kwargs: dict) -> None:
     Args:
             number (int, optional): Defaults to 1.
     """
-    for i in range(number):
+    process_utils = ProcessDetails()
+    kwargs["process_utils"] = process_utils
+    for i in range(1, number + 1):
         kwargs.update({"thread_number": i})
         Thread(target=read_video_thread, args=[queue], kwargs=kwargs).start()
         # print("Started thread Number: ", i + 1)
@@ -158,35 +164,39 @@ def read_video_thread(queue: Queue, **kwargs) -> None:
     Args:
             path (str, optional): path to video
     """
-    data_queue = kwargs.get("data_queue")
-    thread_start_time = time.time()
     detection_worker = kwargs.get("detection_worker")
-    thread_run_time: int = kwargs.get("run_time")
     video_path = kwargs.get("video_path")
-    read_video = ReadVideo(video_path, **kwargs)
+    read_video = ReadVideo(video_path, **kwargs)  # cam class
     read_video.read()
-    start_time = time.time()
-    total_time = None
-
+    process_utils: ProcessDetails = kwargs.get(
+        "process_utils"
+    )  # process related details
+    thread_run_time: int = kwargs.get("run_time")
+    thread_start_time = time.time()
+    total_frames = 0
+    save_clock = time.time()  # timer till SAVE_TIME
+    running_time = 0
+    _save = kwargs.get("saving_instance")
     for frame in read_video.agument_video():
-        try:
-            if kwargs.get("run_detections"):
-                detection_details: dict = detection_worker.detect(frame)
-
-            end_time = time.time()
-            total_time = end_time - start_time
-            start_time = time.time()
-
-            # collect data according to parameters
-            data_collection(data_queue, {"total_time": total_time}, **kwargs)
-            if SHOW_VIDEO:
-                try:
-                    cv2.imshow("frame", detection_details["processed_frame"])
-                except cv2.error as _e:
-                    print("error when showing frame: ", _e)
-        except ValueError as _e:
-            print("Exception when showing the frame: ", _e)
-
+        result: dict = detection_utils(
+            frame=frame, worker=detection_worker, process_util=process_utils
+        )
+        total_frames += 1
+        running_time += result.pop("processing_time")
+        # collect data according to parameters
+        detection_details = result.pop("func_return")
+        if completed_save_time(save_clock):
+            result["avg_processing_time"] = running_time / total_frames
+            result["total_frames"] = total_frames
+            result["process_number"] = kwargs.get("process_number")
+            result["thread_number"] = kwargs.get("thread_number")
+            print(result)
+            data_collection(running_data=result, _save=_save)
+            save_clock = time.time()
+            total_frames = 0
+            running_time = 0
+        if SHOW_VIDEO:
+            show_video(detection_details["processed_frame"])
         if not queue.empty() or not check_running_status(
             thread_start_time, thread_run_time
         ):
@@ -198,7 +208,47 @@ def read_video_thread(queue: Queue, **kwargs) -> None:
             break
 
 
-def data_collection(queue: Queue, running_data: dict, **kwargs) -> dict:
+def completed_save_time(save_clock: time.time) -> bool:
+    """if save time completed then save the data
+
+    Args:
+        save_clock (time.time): running time
+
+    Returns:
+        bool: completed or not
+    """
+    return time.time() - save_clock >= SAVE_TIME
+
+
+def show_video(frame: np.ndarray):
+    """show cv2 frames
+
+    Args:
+        frame (np.ndarray): frame details
+    """
+    try:
+        cv2.imshow("frame", frame)
+    except cv2.error as _e:
+        print("error when showing frame: ", _e)
+
+
+@ProcessDetails.running_time
+def detection_utils(frame: np.ndarray, worker, **kwargs) -> dict:
+    """send for detection
+
+    Args:
+        frame (np.ndarray): frames
+
+    Returns:
+        dict: detection details
+    """
+    if RUN_DETECTIONS:
+        result: dict = worker.detect(frame)
+        return result
+    return {"message": "Not running any detections"}
+
+
+def data_collection(running_data: dict, _save: Save) -> dict:
     """collect the data according to kwargs
 
     Args:
@@ -209,24 +259,23 @@ def data_collection(queue: Queue, running_data: dict, **kwargs) -> dict:
         dict: acknowledgment
     """
     # if send to server flag set to true then create server data and send that
-    if SEND_TO_SERVER:
+    if SAVE_TO_CSV:
+        _save.save_to_csv([running_data])
+    elif SEND_TO_SERVER:
         data = {
-            "name": f"thread-{kwargs.get('process_number')}{kwargs.get('thread_number')}",
+            "name": f"thread-{running_data.get('process_number')}{running_data.get('thread_number')}",
             "time": running_data["total_time"],
         }
         Thread(target=requests_util, args=["", data]).start()
     else:
         data = {
-            f"thread-{kwargs.get('process_number')}{kwargs.get('thread_number')}": running_data[
+            f"thread-{running_data.get('process_number')}{running_data.get('thread_number')}": running_data[
                 "total_time"
             ]
         }
         print(json.dumps(data), end=",")
         if SAVE_QUEUE:
-            queue.put(data)
-            _save = kwargs.get("saving_instance")
             _save.save_without_run(data)
-
     return {"message": "saved"}
 
 
