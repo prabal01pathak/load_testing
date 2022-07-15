@@ -61,7 +61,7 @@ class ProcessDetails:
             float: return total cpu utilization
         """
         cpu_utilization = self.process.cpu_percent()
-        return cpu_utilization
+        return cpu_utilization/psutil.cpu_count()
 
     def get_gpu_usage(self) -> str:
         """return total gpu usage
@@ -78,7 +78,7 @@ class ProcessDetails:
             str: get total memory used
         """
         svmem = psutil.virtual_memory()
-        return self.get_size(svmem.used)
+        return self.process.memory_percent() #self.get_size(svmem.used)
 
     def gpu_memory_free(self) -> str:
         """get total memory free

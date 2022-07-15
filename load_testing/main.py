@@ -61,6 +61,7 @@ def process(
     run_detections: bool = RUN_DETECTIONS,
     create_log: bool = SAVE_LOG,
     save_to_csv: bool = SAVE_TO_CSV,
+    csv_save_path: Path = None
 ) -> None:
     """initiate process number=number
     Args:
@@ -101,6 +102,7 @@ def process(
         "thread_number": None,
         "detection_worker": None,
         "process_utils": None,
+        "csv_save_path": csv_save_path
     }
     print("[")
     # print(
@@ -127,12 +129,9 @@ def create_process(queue: Iterable[Queue], **kwargs: dict) -> None:
             queue (Queue): queue bus
     """
     if SAVE_TO_CSV:
-        process_number = kwargs.get("process_number")
-        process_path_dir: Path = create_process_folder(process_number)
-        process_path_file = process_path_dir / f"process_data_{process_number}.csv"
+        process_path_file: Path = kwargs.get("csv_save_path")
         _save = Save(queue=queue, path=process_path_file, **kwargs)
         kwargs["saving_instance"] = _save
-
     if RUN_DETECTIONS:
         from .detection_logic.feed_logic.saved_driver import Worker
 
