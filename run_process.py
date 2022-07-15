@@ -5,9 +5,11 @@ Run every possible combinations from max_process and max_thread arguments
 """
 import os
 import time
-
+from pathlib import Path
 
 from typer import Typer
+
+from load_testing.utils.save_data import create_process_folder
 
 app = Typer()
 
@@ -38,7 +40,9 @@ def run(
     log_file = " >> logs/logs.json" if create_log else ""
     create_log = "--create-log" if create_log else "--no-create-log"
     run_detections = "--run-detections" if run_detections else "--no-run-detections"
-    for _ in range(process_count):
+    for process_number in range(1, process_count+1):
+        process_path_dir: Path = create_process_folder(process_number)
+        process_path_file = process_path_dir / f"process_data_{process_number}.csv"
         script = f"""\\
                 gnome-terminal --tab -- bash -c \\
                 \"python3 runapp.py \\
@@ -46,6 +50,7 @@ def run(
                 --thread-count {thread_count} \\
                 --run-time {run_time} \\
                 --video-path {video_path} \\
+                --csv-save-path {process_path_file} \\
                 {create_log} \\
                 {run_detections} \\
                 {log_file}\";"""
